@@ -1,0 +1,11 @@
+*.pyc
+*.DS_Store
+*.svn
+*.tmp
+*._*
+*.egg-info/
+.eggs/
+test.*
+build/
+dist/
+.status
