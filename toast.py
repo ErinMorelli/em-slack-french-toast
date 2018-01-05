@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2018 Erin Morelli
+Copyright (c) 2018 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -21,6 +21,7 @@ from french_toast import SCHEDULER
 
 
 def main():
+    """Initialize Flask application."""
     # Start status checking jobs
     SCHEDULER.start()
 
