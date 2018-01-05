@@ -154,7 +154,7 @@ class FrenchToastAlerter(object):
 
         return urls
 
-    def _send_result(self, session, response):  # pylint: disable=unused-argument
+    def _send_result(self, session, response):  # pylint: disable=W0613
         """Log an errors during Slack API calls."""
         if response.status_code != 200:
             report_event('bad_slack_request', {
