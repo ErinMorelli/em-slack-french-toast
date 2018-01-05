@@ -252,6 +252,3 @@ class FrenchToastAlerter(object):
 def check_status():
     """Run the French Toast alerter."""
     FrenchToastAlerter().send_alerts()
-
-    # Temporary logging item for debugging
-    report_event('checking_status', {})
