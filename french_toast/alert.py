@@ -186,11 +186,18 @@ class FrenchToastAlerter(object):
                 'status_code': response.status_code,
                 'reason': response.reason,
                 'text': response.text,
-                'url': response.request.url
+                'url': response.url
             })
         else:
             # Locate team based on the request URL
             team = Teams.query.filter_by(url=response.url).first()
+
+            # Bail if team not found
+            if team is None:
+                report_event('team_not_found', {
+                    'url': response.url
+                })
+                return
 
             # Get the current status' timestamp
             timestamp = session.get_timestamp()
@@ -240,3 +247,6 @@ class FrenchToastAlerter(object):
 def check_status():
     """Run the French Toast alerter."""
     FrenchToastAlerter().send_alerts()
+
+    # Temporary logging item for debugging
+    report_event('checking_status', {})

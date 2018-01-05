@@ -159,7 +159,7 @@ def store_data(info):
 def send_initial_alert(team):
     """Send an initial alert to the team."""
     alerter = FrenchToastAlerter()
-    alerter.send_alert(team)
+    alerter.send_alert(team, True)
 
 
 def validate_return(args):
