@@ -17,13 +17,30 @@ included in all copies or substantial portions of the Software.
 """
 
 import json
-import time
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import requests
+from sqlalchemy import cast
 from requests_futures.sessions import FuturesSession
 from french_toast.storage import Teams, Status, DB
 from french_toast import ALERT_LEVELS, PROJECT_INFO, report_event
+
+
+class FrenchToastSession(FuturesSession):
+    """Custome wrapper for FutureSession to store timestamp data."""
+
+    def __init__(self):
+        """Initialize with added timestamp value."""
+        super().__init__()
+        self.timestamp = None
+
+    def set_timestamp(self, timestamp):
+        """Set a new timestamp."""
+        self.timestamp = timestamp
+
+    def get_timestamp(self):
+        """Retrieve timestamp value."""
+        return self.timestamp
 
 
 class FrenchToastAlerter(object):
@@ -36,11 +53,15 @@ class FrenchToastAlerter(object):
         self.level = self._get_level_from_status()
         self.status_changed = self._has_status_changed()
 
+        # Store the new status
+        if self.status_changed:
+            self._store_new_status()
+
         # Slack API request message data
         self.msg_data = json.dumps(self._generate_message_content())
 
         # Asynchronous API request session
-        self.session = FuturesSession()
+        self.session = FrenchToastSession()
 
     def _get_raw_xml(self):
         """Get raw status data from French Toast XML API."""
@@ -106,6 +127,12 @@ class FrenchToastAlerter(object):
 
         return previous.status
 
+    def _get_status_timestamp(self):
+        """Get the timestamp of the current status."""
+        current = Status.query.get(1)
+
+        return current.updated
+
     def _has_status_changed(self):
         """Compare the current status to the previously seen status."""
         if (
@@ -129,8 +156,14 @@ class FrenchToastAlerter(object):
         # Save changes
         DB.session.commit()
 
+        # Return timestamp
+        return new.updated
+
     def _generate_message_content(self):
         """Generate hash of Slack API message content."""
+        timestamp = self._get_status_timestamp()
+
+        # Return JSON-ready hash of message data
         return {
             "attachments": [
                 {
@@ -140,56 +173,70 @@ class FrenchToastAlerter(object):
                     "title": self.status,
                     "text": self.level['desc'],
                     "thumb_url": self.level['img'],
-                    "ts": int(time.time())
+                    "ts": timestamp.timestamp()
                 }
             ]
         }
 
-    def _get_send_urls(self):
-        """Get array of Slack URLs to make API requests to from database."""
-        teams = DB.session.query(Teams.url).all()
-
-        # Convert list of tuples into a list of strings
-        urls = [url[0] for url in teams]
-
-        return urls
-
     def _send_result(self, session, response):  # pylint: disable=W0613
         """Log an errors during Slack API calls."""
         if response.status_code != 200:
+            # Report any bad requests
             report_event('bad_slack_request', {
                 'status_code': response.status_code,
                 'reason': response.reason,
                 'text': response.text,
                 'url': response.request.url
             })
+        else:
+            # Locate team based on the request URL
+            team = Teams.query.filter_by(url=response.url).first()
 
-    def send_alerts(self):
-        """Send Slack messages to all subscribed Teams."""
-        urls = self._get_send_urls()
+            # Get the current status' timestamp
+            timestamp = session.get_timestamp()
 
-        # Loop over all URLs
-        for url in urls:
+            # Update last alerted timestamp
+            team.last_alerted = timestamp
+
+            # Save changes to database
+            DB.session.commit()
+
+    def send_alert(self, team, force=False):
+        """Send a single alert message to a given URL."""
+        timestamp = self._get_status_timestamp()
+        self.session.set_timestamp(timestamp)
+
+        # Only send messages to the team if it hasn't been sent
+        if force or team.last_alerted != timestamp:
             self.session.post(
-                url,
+                team.url,
                 data=self.msg_data,
                 headers={'Content-Type': 'application/json'},
                 background_callback=self._send_result
             )
 
-    def execute(self):
-        """Run the alerting functions."""
-        # Don't do anything if the status hasn't changed
-        if not self.status_changed:
-            return
+    def send_alerts(self, force=False):
+        """Send Slack messages to all subscribed Teams."""
+        timestamp = self._get_status_timestamp()
+        self.session.set_timestamp(timestamp)
 
-        # Save the new status so this doesn't get run again
-        self._store_new_status()
+        # Get a list of team URLs based on last_alerted timestamp
+        if force:
+            teams = Teams.query.all()
+        else:
+            teams = Teams.query.filter(
+                cast(Teams.last_alerted, DB.DateTime) != timestamp).all()
 
-        # Send alerts to webhook URLs
-        self.send_alerts()
+        # Loop over all teams
+        for team in teams:
+            self.session.post(
+                team.url,
+                data=self.msg_data,
+                headers={'Content-Type': 'application/json'},
+                background_callback=self._send_result
+            )
 
 
 def check_status():
     """Run the French Toast alerter."""
-    FrenchToastAlerter().execute()
+    FrenchToastAlerter().send_alerts()

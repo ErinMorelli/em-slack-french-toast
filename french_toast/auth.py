@@ -21,6 +21,7 @@ from flask import abort
 from slacker import OAuth, Error
 from french_toast import PROJECT_INFO, report_event
 from french_toast.storage import Teams, DB
+from french_toast.alert import FrenchToastAlerter
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 # Create serializer
@@ -138,13 +139,27 @@ def store_data(info):
         report_event('team_added', info)
         DB.session.add(new_team)
 
-    else:
-        # Update team info
-        team.url = info['url']
-        report_event('team_updated', info)
+        # Update DB
+        DB.session.commit()
+
+        # Return new team object
+        return new_team
+
+    # Update team info
+    team.url = info['url']
+    report_event('team_updated', info)
 
     # Update DB
     DB.session.commit()
+
+    # Return team object
+    return team
+
+
+def send_initial_alert(team):
+    """Send an initial alert to the team."""
+    alerter = FrenchToastAlerter()
+    alerter.send_alert(team)
 
 
 def validate_return(args):
@@ -161,7 +176,10 @@ def validate_return(args):
     token_info = get_token(args['code'])
 
     # Set up storage methods
-    store_data(token_info)
+    team = store_data(token_info)
+
+    # Send initial alert
+    send_initial_alert(team)
 
     # Set success url
     redirect_url = '{0}?success=1'.format(PROJECT_INFO['base_url'])
