@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2018 Erin Morelli
+Copyright (c) 2018 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -15,14 +15,13 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-from urllib import urlencode
 from datetime import timedelta
+from urllib.parse import urlencode
 from flask import abort
 from slacker import OAuth, Error
 from french_toast import PROJECT_INFO
 from french_toast.storage import Teams, DB
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-
 
 # Create serializer
 GENERATOR = URLSafeTimedSerializer(PROJECT_INFO['client_secret'])
@@ -69,9 +68,6 @@ def validate_state(state):
         # Token is not authorized
         abort(401)
 
-    # Return success
-    return
-
 
 def get_token(code):
     """Request a token from the Slack API."""
@@ -95,10 +91,9 @@ def get_token(code):
 
     # Setup return info
     info = {
-        'token': result.body['access_token'],
         'team_id': result.body['team_id'],
-        'bot_id': result.body['bot']['bot_user_id'],
-        'bot_token': result.body['bot']['bot_access_token']
+        'channel_id': result.body['incoming_webhook']['channel_id'],
+        'url': result.body['incoming_webhook']['url']
     }
 
     # Return info
@@ -108,32 +103,32 @@ def get_token(code):
 def store_data(info):
     """Store validated data in the database."""
     # Check if user exists
-    team = Teams.query.get(info['team_id'])
+    team = Teams.query.filter_by(
+        team_id=info['team_id'],
+        channel_id=info['channel_id']
+    ).first()
 
     if team is None:
         # Create new team
-        new_team = Teams(info['team_id'])
-        new_team.token = info['token']
-        new_team.bot_id = info['bot_id']
-        new_team.bot_token = info['bot_token']
+        new_team = Teams(
+            team_id=info['team_id'],
+            channel_id=info['channel_id'],
+            url=info['url']
+        )
 
         # Store new user
         DB.session.add(new_team)
 
     else:
         # Update team info
-        team.token = info['token']
-        team.bot_id = info['bot_id']
-        team.bot_token = info['bot_token']
+        team.url = info['url']
 
     # Update DB
     DB.session.commit()
 
-    return
-
 
 def validate_return(args):
-    """Wrapper function for data validation functions."""
+    """Run data validation functions."""
     # Make sure we have args
     if not args['state'] or not args['code']:
         abort(400)

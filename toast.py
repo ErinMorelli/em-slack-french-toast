@@ -1,25 +1,32 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
+"""
+Copyright (c) 2018 Erin Morelli
 
-from datetime import datetime
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+"""
+
+from os import environ
 from french_toast.app import APP
-from french_toast import EmSlackFrenchToast
-from apscheduler.schedulers.blocking import BlockingScheduler
-
-
-def check_alert_status():
-    print(str(datetime.now()))
-    EmSlackFrenchToast().execute()
+from french_toast import SCHEDULER
 
 
 def main():
-    scheduler = BlockingScheduler()
-    scheduler.add_job(check_alert_status, 'interval', minutes=1)
-    scheduler.start()
-
-
-if __name__ == '__main__':
-    # main()
+    # Start status checking jobs
+    SCHEDULER.start()
 
     # Start Flask app
     APP.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)))
+
+
+if __name__ == '__main__':
+    main()

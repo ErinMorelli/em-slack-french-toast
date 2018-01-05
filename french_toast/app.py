@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2018 Erin Morelli
+Copyright (c) 2018 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -15,9 +15,9 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-from flask import redirect, render_template, request
 import french_toast.auth as auth
 from french_toast import APP, PROJECT_INFO
+from flask import redirect, render_template, request
 
 
 @APP.route('/', methods=['GET', 'POST'])
