@@ -19,7 +19,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 from flask import abort
 from slacker import OAuth, Error
-from french_toast import PROJECT_INFO
+from french_toast import PROJECT_INFO, report_event
 from french_toast.storage import Teams, DB
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
@@ -58,14 +58,24 @@ def validate_state(state):
 
     except SignatureExpired:
         # Token has expired
+        report_event('token_expired', {
+            'state': state
+        })
         abort(400)
 
     except BadSignature:
         # Token is not authorized
+        report_event('token_not_authorized', {
+            'state': state
+        })
         abort(401)
 
     if state_token != PROJECT_INFO['client_id']:
         # Token is not authorized
+        report_event('token_not_valid', {
+            'state': state,
+            'state_token': state_token
+        })
         abort(401)
 
 
@@ -84,9 +94,17 @@ def get_token(code):
         )
 
     except Error as err:
+        report_event('oauth_error', {
+            'code': code,
+            'error': str(err)
+        })
         abort(400)
 
     if not result.successful:
+        report_event('oauth_unsuccessful', {
+            'code': code,
+            'result': result.__dict__
+        })
         abort(400)
 
     # Setup return info
@@ -117,11 +135,13 @@ def store_data(info):
         )
 
         # Store new user
+        report_event('team_added', info)
         DB.session.add(new_team)
 
     else:
         # Update team info
         team.url = info['url']
+        report_event('team_updated', info)
 
     # Update DB
     DB.session.commit()
@@ -131,6 +151,7 @@ def validate_return(args):
     """Run data validation functions."""
     # Make sure we have args
     if not args['state'] or not args['code']:
+        report_event('missing_args', args)
         abort(400)
 
     # Validate state

@@ -20,7 +20,7 @@ from french_toast import APP, PROJECT_INFO
 from flask import redirect, render_template, request
 
 
-@APP.route('/', methods=['GET', 'POST'])
+@APP.route('/')
 def home():
     """Render app homepage template."""
     return render_template('index.html', project=PROJECT_INFO)

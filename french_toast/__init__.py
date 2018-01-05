@@ -17,6 +17,8 @@ included in all copies or substantial portions of the Software.
 
 import os
 from datetime import date
+from threading import Thread
+import keen
 from flask import Flask
 from pkg_resources import get_provider
 from flask_apscheduler import APScheduler
@@ -114,6 +116,21 @@ ALERT_LEVELS = {
                  "for use as emergency food supply if needed.")
     }
 }
+
+
+def report_event(name, event):
+    """Asynchronously report an event."""
+    # Set up thread
+    event_report = Thread(
+        target=keen.add_event,
+        args=(name, event)
+    )
+
+    # Set up as asynchronous daemon
+    event_report.daemon = True
+
+    # Start event report
+    event_report.start()
 
 # =============================================================================
 # Flask App Configuration

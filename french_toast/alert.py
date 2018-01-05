@@ -20,9 +20,9 @@ import time
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import requests
-from french_toast.storage import Teams, Status, DB
-from french_toast import ALERT_LEVELS, PROJECT_INFO
 from requests_futures.sessions import FuturesSession
+from french_toast.storage import Teams, Status, DB
+from french_toast import ALERT_LEVELS, PROJECT_INFO, report_event
 
 
 class FrenchToastAlerter(object):
@@ -32,8 +32,8 @@ class FrenchToastAlerter(object):
         """Set up French Toast status data."""
         self.status = self._get_status()
         self.previous_status = self._get_previous_status()
-        self.status_changed = self._has_status_changed()
         self.level = self._get_level_from_status()
+        self.status_changed = self._has_status_changed()
 
         # Slack API request message data
         self.msg_data = json.dumps(self._generate_message_content())
@@ -43,8 +43,15 @@ class FrenchToastAlerter(object):
 
     def _get_raw_xml(self):
         """Get raw status data from French Toast XML API."""
-        response = requests.get(PROJECT_INFO['toast_api_url'])
-        response.raise_for_status()
+        try:
+            # Attempt to get API data
+            response = requests.get(PROJECT_INFO['toast_api_url'])
+            response.raise_for_status()
+
+        except requests.exceptions.RequestException as err:
+            # Report any errors
+            report_event(str(err), {})
+            return False
 
         # Only return the text data
         return response.text
@@ -61,21 +68,34 @@ class FrenchToastAlerter(object):
 
         # Check that a valid status was found
         if status is None or not isinstance(status, str):
-            raise ValueError('A valid status was not found!')
+            report_event('invalid_xml_status', {
+                'status': status
+            })
+            return status
 
         # Return in uppercase
         return status.upper()
 
     def _get_status(self):
         """Get status from XML data."""
-        self._xml = ET.fromstring(self._get_raw_xml())
+        raw_xml = self._get_raw_xml()
+
+        # Check for invalid data
+        if not raw_xml:
+            return None
+
+        # Parse raw XML data
+        self._xml = ET.fromstring()
 
         return self._get_status_from_xml()
 
     def _get_level_from_status(self):
         """Get alert level data from status."""
         if self.status not in ALERT_LEVELS.keys():
-            raise ValueError('Status "{s}" not found!'.format(s=self.status))
+            report_event('unknown_status', {
+                'status': self.status
+            })
+            return None
 
         return ALERT_LEVELS[self.status]
 
@@ -87,6 +107,14 @@ class FrenchToastAlerter(object):
 
     def _has_status_changed(self):
         """Compare the current status to the previously seen status."""
+        if (
+                self.status is None or
+                self.previous_status is None or
+                self.level is None
+        ):
+            return False
+
+        # If have statuses, compare them
         return self.status != self.previous_status
 
     def _store_new_status(self):
@@ -126,8 +154,14 @@ class FrenchToastAlerter(object):
         return urls
 
     def _send_result(self, session, response):
-        """Make POST request to a given Slack webhook URL."""
-        print(response)
+        """Log an errors during Slack API calls."""
+        if response.status_code != 200:
+            report_event('bad_slack_request', {
+                'status_code': response.status_code,
+                'reason': response.reason,
+                'text': response.text,
+                'url': response.request.url
+            })
 
     def send_alerts(self):
         """Send Slack messages to all subscribed Teams."""

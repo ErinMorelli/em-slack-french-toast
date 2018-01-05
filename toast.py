@@ -16,12 +16,16 @@ included in all copies or substantial portions of the Software.
 """
 
 from os import environ
+import newrelic.agent
 from french_toast.app import APP
 from french_toast import SCHEDULER
 
 
 def main():
     """Initialize Flask application."""
+    # Start New Relic agent
+    newrelic.agent.initialize()
+
     # Start status checking jobs
     SCHEDULER.start()
 
