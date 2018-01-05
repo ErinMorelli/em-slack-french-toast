@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=no-self-use
 # -*- coding: UTF-8 -*-
 """
 Copyright (c) 2018 Erin Morelli.
@@ -85,7 +86,7 @@ class FrenchToastAlerter(object):
             return None
 
         # Parse raw XML data
-        self._xml = ET.fromstring()
+        self._xml = ET.fromstring(raw_xml)
 
         return self._get_status_from_xml()
 
@@ -153,7 +154,7 @@ class FrenchToastAlerter(object):
 
         return urls
 
-    def _send_result(self, session, response):
+    def _send_result(self, session, response):  # pylint: disable=unused-argument
         """Log an errors during Slack API calls."""
         if response.status_code != 200:
             report_event('bad_slack_request', {
@@ -186,7 +187,7 @@ class FrenchToastAlerter(object):
         self._store_new_status()
 
         # Send alerts to webhook URLs
-        self._send_alerts()
+        self.send_alerts()
 
 
 def check_status():
