@@ -37,7 +37,7 @@ def gen_data_files(*dirs):
 # Set up french_toast package
 setup(
     name='em-slack-french-toast',
-    version='1.0',
+    version='1.2',
     author='Erin Morelli',
     author_email='erin@erinmorelli.com',
     url='http://slack-french-toast.herokuapp.com',

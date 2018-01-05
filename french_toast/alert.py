@@ -234,6 +234,11 @@ class FrenchToastAlerter(object):
             teams = Teams.query.filter(
                 cast(Teams.last_alerted, DB.DateTime) != timestamp).all()
 
+        # Temporary logging item for debugging
+        report_event('sending_alerts', {
+            'count': len(teams)
+        })
+
         # Loop over all teams
         for team in teams:
             self.session.post(
