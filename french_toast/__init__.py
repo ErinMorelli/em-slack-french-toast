@@ -18,9 +18,9 @@ included in all copies or substantial portions of the Software.
 import os
 from datetime import date
 from threading import Thread
+from pkg_resources import get_provider
 import keen
 from flask import Flask
-from pkg_resources import get_provider
 from flask_apscheduler import APScheduler
 
 
@@ -47,15 +47,14 @@ def set_project_info():
         'name_full': 'EM Slack French Toast',
         'author_url': 'http://www.erinmorelli.com',
         'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '1.3',
-        'version_int': 1.3,
+        'version': '1.4',
+        'version_int': 1.4,
         'package_path': provider.module_path,
         'copyright': str(date.today().year),
         'client_secret': os.environ['SLACK_CLIENT_SECRET'],
         'client_id': os.environ['SLACK_CLIENT_ID'],
         'base_url': base_url,
         'oauth_url': 'https://slack.com/oauth/authorize',
-        'hook_url': 'https://hooks.slack.com/services',
         'auth_url': '{0}/authenticate'.format(base_url),
         'valid_url': '{0}/validate'.format(base_url),
         'toast_api_url': 'http://www.universalhub.com/toast.xml',
@@ -64,6 +63,7 @@ def set_project_info():
         ]
     }
 
+
 # Project info
 PROJECT_INFO = set_project_info()
 
@@ -71,44 +71,45 @@ PROJECT_INFO = set_project_info()
 TEMPLATE_DIR = os.path.join(PROJECT_INFO['package_path'], 'templates')
 
 # Set the French Toast alert levels
+# Content taken directly from http://www.universalhub.com/french-toast
 ALERT_LEVELS = {
     "LOW": {
-        "color": "97FF9B",
+        "color": "#97FF9B",
         "img": "http://www.universalhub.com/images/2007/frenchtoastgreen.jpg",
-        "desc": ("No storm predicted. Harvey Leonard sighs and looks dour on "
+        "text": ("No storm predicted. Harvey Leonard sighs and looks dour on "
                  "the evening news. Go about your daily business but consider "
                  "buying second refrigerator for basement, diesel generator. "
                  "Good time to replenish stocks of maple syrup, cinnamon.")
     },
     "GUARDED": {
-        "color": "9799FF",
+        "color": "#9799FF",
         "img": "http://www.universalhub.com/images/2007/frenchtoastblue.jpg",
-        "desc": ("Light snow predicted. Subtle grin appears on Harvey "
+        "text": ("Light snow predicted. Subtle grin appears on Harvey "
                  "Leonard's face. Check car fuel gauge, memorize quickest "
                  "route to emergency supermarket should conditions change.")
     },
     "ELEVATED": {
-        "color": "FFFF40",
+        "color": "#FFFF40",
         "img": "http://www.universalhub.com/images/2007/frenchtoastyellow.jpg",
-        "desc": ("Moderate, plowable snow predicted. Harvey Leonard openly "
+        "text": ("Moderate, plowable snow predicted. Harvey Leonard openly "
                  "smiles during report. Empty your trunk to make room for "
                  "milk, eggs and bread. Clear space in refrigerator and head "
                  "to store for an extra gallon of milk, a spare dozen eggs "
                  "and a new loaf of bread.")
     },
     "HIGH": {
-        "color": "FF821D",
+        "color": "#FF821D",
         "img": "http://www.universalhub.com/images/2007/frenchtoastorange.jpg",
-        "desc": ("Heavy snow predicted. Harvey Leonard breaks into huge grin, "
+        "text": ("Heavy snow predicted. Harvey Leonard breaks into huge grin, "
                  "can't keep his hands off the weather map. Proceed at speed "
                  "limit _before snow starts_ to nearest supermarket to pick "
                  "up two gallons of milk, a couple dozen eggs and two loaves "
                  "of bread - per person in household.")
     },
     "SEVERE": {
-        "color": "F85D58",
+        "color": "#F85D58",
         "img": "http://www.universalhub.com/images/2007/frenchtoastred.jpg",
-        "desc": ("Nor'easter predicted. This is it, people, THE BIG ONE. "
+        "text": ("Nor'easter predicted. This is it, people, THE BIG ONE. "
                  "Harvey Leonard makes repeated references to the Blizzard "
                  "of '78. RUSH to emergency supermarket NOW for multiple "
                  "gallons of milk, cartons of eggs and loaves of bread. "
@@ -133,11 +134,12 @@ def report_event(name, event):
     # Start event report
     event_report.start()
 
+
 # =============================================================================
 # Flask App Configuration
 # =============================================================================
 
-# Initalize flask app
+# Initialize flask app
 APP = Flask(
     'em-slack-french-toast',
     template_folder=TEMPLATE_DIR,
@@ -161,6 +163,6 @@ APP.config.update({
     ]
 })
 
-# Set up job scheduler
+# Set up status checking job scheduler
 SCHEDULER = APScheduler()
 SCHEDULER.init_app(APP)

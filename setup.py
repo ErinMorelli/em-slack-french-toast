@@ -37,13 +37,13 @@ def gen_data_files(*dirs):
 # Set up french_toast package
 setup(
     name='em-slack-french-toast',
-    version='1.3',
+    version='1.4',
     author='Erin Morelli',
     author_email='erin@erinmorelli.com',
     url='http://slack-french-toast.herokuapp.com',
     license='MIT',
     platforms='Linux, OSX',
-    # description='Roll some dice on Slack.',
+    description='Get Universal Hub\'s French Toast Alerts on Slack.',
     long_description=open('README.md').read(),
 
     packages=[

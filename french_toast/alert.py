@@ -167,11 +167,11 @@ class FrenchToastAlerter(object):
         return {
             "attachments": [
                 {
-                    "color": '#{color}'.format(color=self.level['color']),
+                    "color": self.level['color'],
                     "author_name": "French Toast Alert System",
                     "author_link": "http://www.universalhub.com/french-toast",
                     "title": self.status,
-                    "text": self.level['desc'],
+                    "text": self.level['text'],
                     "thumb_url": self.level['img'],
                     "ts": timestamp.timestamp()
                 }
@@ -179,34 +179,32 @@ class FrenchToastAlerter(object):
         }
 
     def _send_result(self, session, response):  # pylint: disable=W0613
-        """Log an errors during Slack API calls."""
+        """Process the results of sending a message to Slack."""
+        # Report any bad requests and exit
         if response.status_code != 200:
-            # Report any bad requests
             report_event('bad_slack_request', {
                 'status_code': response.status_code,
                 'reason': response.reason,
                 'text': response.text,
                 'url': response.url
             })
-        else:
-            # Locate team based on the request URL
-            team = Teams.query.filter_by(url=response.url).first()
+            return
 
-            # Bail if team not found
-            if team is None:
-                report_event('team_not_found', {
-                    'url': response.url
-                })
-                return
+        # Locate team based on the request URL
+        team = Teams.query.filter_by(url=response.url).first()
 
-            # Get the current status' timestamp
-            timestamp = session.get_timestamp()
+        # Bail if team not found
+        if team is None:
+            report_event('team_not_found', {
+                'url': response.url
+            })
+            return
 
-            # Update last alerted timestamp
-            team.last_alerted = timestamp
+        # Update last alerted timestamp
+        team.last_alerted = session.get_timestamp()
 
-            # Save changes to database
-            DB.session.commit()
+        # Save changes to database
+        DB.session.commit()
 
     def send_alert(self, team, force=False):
         """Send a single alert message to a given URL."""

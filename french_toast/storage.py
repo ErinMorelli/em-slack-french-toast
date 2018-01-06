@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# pylint: disable=invalid-name,bare-except
+# pylint: disable=invalid-name
 """
 Copyright (c) 2018 Erin Morelli.
 
@@ -19,6 +19,7 @@ included in all copies or substantial portions of the Software.
 from datetime import datetime
 from french_toast import APP
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
 
 # Create database
 DB = SQLAlchemy(APP)
@@ -78,6 +79,6 @@ try:
     # Attempt to initialize database
     DB.create_all()
 
-except:
+except SQLAlchemyError:
     # Other wise, refresh the session
     DB.session.rollback()
