@@ -181,7 +181,7 @@ def validate_return(args):
     # Send initial alert
     send_initial_alert(team)
 
-    # Set success url
+    # Set success URL
     redirect_url = '{0}?success=1'.format(PROJECT_INFO['base_url'])
 
     # Return successful

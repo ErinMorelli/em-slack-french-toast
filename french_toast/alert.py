@@ -20,14 +20,14 @@ import json
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import requests
-from sqlalchemy import cast
 from requests_futures.sessions import FuturesSession
+from sqlalchemy import cast
 from french_toast.storage import Teams, Status, DB
 from french_toast import ALERT_LEVELS, PROJECT_INFO, report_event
 
 
 class FrenchToastSession(FuturesSession):
-    """Custome wrapper for FutureSession to store timestamp data."""
+    """Custom wrapper for FutureSession to store timestamp data."""
 
     def __init__(self):
         """Initialize with added timestamp value."""
@@ -140,6 +140,11 @@ class FrenchToastAlerter(object):
                 self.previous_status is None or
                 self.level is None
         ):
+            report_event('bad_status_change', {
+                'status': self.status,
+                'previous_status': self.previous_status,
+                'level': self.level
+            })
             return False
 
         # If have statuses, compare them
@@ -180,13 +185,12 @@ class FrenchToastAlerter(object):
 
     def _send_result(self, session, response):  # pylint: disable=W0613
         """Process the results of sending a message to Slack."""
-        # Report any bad requests and exit
-        if response.status_code != 200:
-            report_event('bad_slack_request', {
+        # Bail if we're missing a team URL
+        if not response.url:
+            report_event('missing_team_url', {
                 'status_code': response.status_code,
                 'reason': response.reason,
-                'text': response.text,
-                'url': response.url
+                'text': response.text
             })
             return
 
@@ -200,7 +204,31 @@ class FrenchToastAlerter(object):
             })
             return
 
-        # Update last alerted timestamp
+        # Check for team not found
+        if response.status_code == 404:
+            # Report event
+            report_event('team_marked_inactive', {
+                'status_code': response.status_code,
+                'reason': response.reason,
+                'text': response.text,
+                'url': response.url,
+                'team': team.team_id
+            })
+
+            # Mark team as inactive
+            team.inactive = True
+
+        elif response.status_code != 200:
+            # Report bad request and exit
+            report_event('bad_slack_request', {
+                'status_code': response.status_code,
+                'reason': response.reason,
+                'text': response.text,
+                'url': response.url
+            })
+            return
+
+        # Otherwise, update last alerted timestamp
         team.last_alerted = session.get_timestamp()
 
         # Save changes to database
@@ -212,7 +240,10 @@ class FrenchToastAlerter(object):
         self.session.set_timestamp(timestamp)
 
         # Only send messages to the team if it hasn't been sent
-        if force or team.last_alerted != timestamp:
+        if (
+                force or
+                (team.last_alerted != timestamp and not team.inactive)
+        ):
             self.session.post(
                 team.url,
                 data=self.msg_data,
@@ -230,7 +261,10 @@ class FrenchToastAlerter(object):
             teams = Teams.query.all()
         else:
             teams = Teams.query.filter(
-                cast(Teams.last_alerted, DB.DateTime) != timestamp).all()
+                cast(Teams.last_alerted, DB.DateTime) != timestamp
+            ).filter_by(
+                inactive=False
+            ).all()
 
         # Temporary logging item for debugging
         report_event('sending_alerts', {

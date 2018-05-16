@@ -36,6 +36,7 @@ class Teams(DB.Model):  # pylint: disable=too-few-public-methods
     url = DB.Column(DB.String(255), unique=True)
     added = DB.Column(DB.DateTime, default=datetime.now)
     last_alerted = DB.Column(DB.DateTime)
+    inactive = DB.Column(DB.Boolean, default=False)
 
     def __init__(self, team_id, channel_id, url):
         """Initialize new Team in db."""

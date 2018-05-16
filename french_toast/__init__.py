@@ -19,9 +19,9 @@ import os
 from datetime import date
 from threading import Thread
 from pkg_resources import get_provider
-import keen
 from flask import Flask
 from flask_apscheduler import APScheduler
+import keen
 
 
 # =============================================================================
@@ -47,8 +47,8 @@ def set_project_info():
         'name_full': 'EM Slack French Toast',
         'author_url': 'http://www.erinmorelli.com',
         'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '1.4',
-        'version_int': 1.4,
+        'version': '1.5',
+        'version_int': 1.5,
         'package_path': provider.module_path,
         'copyright': str(date.today().year),
         'client_secret': os.environ['SLACK_CLIENT_SECRET'],
