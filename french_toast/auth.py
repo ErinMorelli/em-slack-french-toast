@@ -147,6 +147,7 @@ def store_data(info):
 
     # Update team info
     team.url = info['url']
+    team.inactive = False
     report_event('team_updated', info)
 
     # Update DB
