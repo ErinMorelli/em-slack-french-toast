@@ -2,7 +2,7 @@
 # pylint: disable=no-self-use
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2018 Erin Morelli.
+Copyright (c) 2019 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -175,7 +175,7 @@ class FrenchToastAlerter(object):
                     "color": self.level['color'],
                     "author_name": "French Toast Alert System",
                     "author_link": "http://www.universalhub.com/french-toast",
-                    "title": self.status,
+                    "title": self.level['title'],
                     "text": self.level['text'],
                     "thumb_url": self.level['img'],
                     "ts": timestamp.timestamp()

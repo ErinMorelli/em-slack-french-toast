@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2018 Erin Morelli.
+Copyright (c) 2019 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -47,8 +47,8 @@ def set_project_info():
         'name_full': 'EM Slack French Toast',
         'author_url': 'http://www.erinmorelli.com',
         'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '1.6',
-        'version_int': 1.6,
+        'version': '1.7',
+        'version_int': 1.7,
         'package_path': provider.module_path,
         'copyright': str(date.today().year),
         'client_secret': os.environ['SLACK_CLIENT_SECRET'],
@@ -76,6 +76,7 @@ ALERT_LEVELS = {
     "LOW": {
         "color": "#97FF9B",
         "img": "http://www.universalhub.com/images/2007/frenchtoastgreen.jpg",
+        "title": "1 Slice / Low",
         "text": ("No storm predicted. Harvey Leonard sighs and looks dour on "
                  "the evening news. Go about your daily business but consider "
                  "buying second refrigerator for basement, diesel generator. "
@@ -84,6 +85,7 @@ ALERT_LEVELS = {
     "GUARDED": {
         "color": "#9799FF",
         "img": "http://www.universalhub.com/images/2007/frenchtoastblue.jpg",
+        "title": "2 Slices / Guarded",
         "text": ("Light snow predicted. Subtle grin appears on Harvey "
                  "Leonard's face. Check car fuel gauge, memorize quickest "
                  "route to emergency supermarket should conditions change.")
@@ -91,6 +93,7 @@ ALERT_LEVELS = {
     "ELEVATED": {
         "color": "#FFFF40",
         "img": "http://www.universalhub.com/images/2007/frenchtoastyellow.jpg",
+        "title": "3 Slices / Elevated",
         "text": ("Moderate, plowable snow predicted. Harvey Leonard openly "
                  "smiles during report. Empty your trunk to make room for "
                  "milk, eggs and bread. Clear space in refrigerator and head "
@@ -100,6 +103,7 @@ ALERT_LEVELS = {
     "HIGH": {
         "color": "#FF821D",
         "img": "http://www.universalhub.com/images/2007/frenchtoastorange.jpg",
+        "title": "4 Slices / High",
         "text": ("Heavy snow predicted. Harvey Leonard breaks into huge grin, "
                  "can't keep his hands off the weather map. Proceed at speed "
                  "limit _before snow starts_ to nearest supermarket to pick "
@@ -109,6 +113,7 @@ ALERT_LEVELS = {
     "SEVERE": {
         "color": "#F85D58",
         "img": "http://www.universalhub.com/images/2007/frenchtoastred.jpg",
+        "title": "5 Slices / Severe",
         "text": ("Nor'easter predicted. This is it, people, THE BIG ONE. "
                  "Harvey Leonard makes repeated references to the Blizzard "
                  "of '78. RUSH to emergency supermarket NOW for multiple "
