@@ -62,7 +62,7 @@ setup(
         'newrelic',
         'keen',
         'pkginfo',
-        'psycopg2',
+        'psycopg2-binary',
         'requests',
         'requests_futures',
         'slacker'
