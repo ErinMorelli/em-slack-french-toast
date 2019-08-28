@@ -17,9 +17,10 @@ included in all copies or substantial portions of the Software.
 """
 
 from datetime import datetime
-from french_toast import APP
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
+
+from french_toast import APP
 
 # Create database
 DB = SQLAlchemy(APP)

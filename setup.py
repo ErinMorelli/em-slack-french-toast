@@ -57,14 +57,17 @@ setup(
 
     install_requires=[
         'Flask',
-        'Flask-SQLAlchemy',
         'Flask-APScheduler',
-        'newrelic',
+        'Flask-SQLAlchemy',
+        'itsdangerous',
         'keen',
+        'mysqlclient',
+        'newrelic',
         'pkginfo',
         'psycopg2-binary',
         'requests',
         'requests_futures',
+        'SQLAlchemy',
         'slacker'
     ]
 )

@@ -17,11 +17,12 @@ included in all copies or substantial portions of the Software.
 """
 
 import json
-from datetime import datetime
-import xml.etree.ElementTree as ET
 import requests
-from requests_futures.sessions import FuturesSession
 from sqlalchemy import cast
+from datetime import datetime
+import xml.etree.ElementTree as ElementTree
+from requests_futures.sessions import FuturesSession
+
 from french_toast.storage import Teams, Status, DB
 from french_toast import ALERT_LEVELS, PROJECT_INFO, report_event
 
@@ -63,7 +64,8 @@ class FrenchToastAlerter(object):
         # Asynchronous API request session
         self.session = FrenchToastSession()
 
-    def _get_raw_xml(self):
+    @staticmethod
+    def _get_raw_xml():
         """Get raw status data from French Toast XML API."""
         try:
             # Attempt to get API data
@@ -107,7 +109,7 @@ class FrenchToastAlerter(object):
             return None
 
         # Parse raw XML data
-        self._xml = ET.fromstring(raw_xml)
+        self._xml = ElementTree.fromstring(raw_xml)
 
         return self._get_status_from_xml()
 
@@ -121,13 +123,15 @@ class FrenchToastAlerter(object):
 
         return ALERT_LEVELS[self.status]
 
-    def _get_previous_status(self):
+    @staticmethod
+    def _get_previous_status():
         """Get the previous status from the database."""
         previous = Status.query.get(1)
 
         return previous.status
 
-    def _get_status_timestamp(self):
+    @staticmethod
+    def _get_status_timestamp():
         """Get the timestamp of the current status."""
         current = Status.query.get(1)
 
@@ -183,7 +187,8 @@ class FrenchToastAlerter(object):
             ]
         }
 
-    def _send_result(self, session, response):  # pylint: disable=W0613
+    @staticmethod
+    def _send_result(session, response):  # pylint: disable=W0613
         """Process the results of sending a message to Slack."""
         # Bail if we're missing a team URL
         if not response.url:

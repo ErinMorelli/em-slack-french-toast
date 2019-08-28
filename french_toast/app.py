@@ -15,9 +15,10 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
+from flask import redirect, render_template, request
+
 import french_toast.auth as auth
 from french_toast import APP, PROJECT_INFO
-from flask import redirect, render_template, request
 
 
 @APP.route('/')
