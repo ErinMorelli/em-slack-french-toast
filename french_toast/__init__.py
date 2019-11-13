@@ -21,6 +21,7 @@ from threading import Thread
 from pkg_resources import get_provider
 from flask import Flask
 from flask_apscheduler import APScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import keen
 
 
@@ -57,7 +58,7 @@ def set_project_info():
         'oauth_url': 'https://slack.com/oauth/authorize',
         'auth_url': '{0}/authenticate'.format(base_url),
         'valid_url': '{0}/validate'.format(base_url),
-        'toast_api_url': 'http://www.universalhub.com/toast.xml',
+        'toast_api_url': 'https://www.universalhub.com/toast.xml',
         'team_scope': [
             'incoming-webhook'
         ]
@@ -158,6 +159,16 @@ APP.config.update({
     'SQLALCHEMY_DATABASE_URI': os.environ['DATABASE_URL'],
     'SQLALCHEMY_TRACK_MODIFICATIONS': True,
     'SCHEDULER_API_ENABLED': True,
+    'SCHEDULER_JOBSTORES': {
+        'default': SQLAlchemyJobStore(
+            url=os.environ['DATABASE_URL'],
+            tablename='french_toast_jobs'
+        )
+    },
+    'SCHEDULER_JOB_DEFAULTS': {
+        'coalesce': False,
+        'max_instances': 1
+    },
     'JOBS': [
         {
             'id': 'check_status',
@@ -171,3 +182,4 @@ APP.config.update({
 # Set up status checking job scheduler
 SCHEDULER = APScheduler()
 SCHEDULER.init_app(APP)
+SCHEDULER.remove_all_jobs()

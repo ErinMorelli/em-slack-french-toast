@@ -18,6 +18,7 @@ included in all copies or substantial portions of the Software.
 
 import json
 import requests
+import logging
 from sqlalchemy import cast
 from datetime import datetime
 import xml.etree.ElementTree as ElementTree
@@ -26,22 +27,10 @@ from requests_futures.sessions import FuturesSession
 from french_toast.storage import Teams, Status, DB
 from french_toast import ALERT_LEVELS, PROJECT_INFO, report_event
 
-
-class FrenchToastSession(FuturesSession):
-    """Custom wrapper for FutureSession to store timestamp data."""
-
-    def __init__(self):
-        """Initialize with added timestamp value."""
-        super().__init__()
-        self.timestamp = None
-
-    def set_timestamp(self, timestamp):
-        """Set a new timestamp."""
-        self.timestamp = timestamp
-
-    def get_timestamp(self):
-        """Retrieve timestamp value."""
-        return self.timestamp
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
+    level=logging.DEBUG
+)
 
 
 class FrenchToastAlerter(object):
@@ -49,10 +38,17 @@ class FrenchToastAlerter(object):
 
     def __init__(self):
         """Set up French Toast status data."""
+        self.logger = logging.getLogger('FrenchToastAlerter')
         self.status = self._get_status()
+        self.logger.warning('status: %s', self.status)
+        self.timestamp = self._get_status_timestamp()
+        self.logger.warning('timestamp: %s', self.timestamp)
         self.previous_status = self._get_previous_status()
+        self.logger.warning('previous_status: %s', self.previous_status)
         self.level = self._get_level_from_status()
+        self.logger.warning('level: %s', self.level)
         self.status_changed = self._has_status_changed()
+        self.logger.warning('status_changed: %s', self.status_changed)
 
         # Store the new status
         if self.status_changed:
@@ -60,9 +56,10 @@ class FrenchToastAlerter(object):
 
         # Slack API request message data
         self.msg_data = json.dumps(self._generate_message_content())
+        self.logger.warning('msg_data: %s', self.msg_data)
 
         # Asynchronous API request session
-        self.session = FrenchToastSession()
+        self.session = FuturesSession()
 
     @staticmethod
     def _get_raw_xml():
@@ -157,16 +154,17 @@ class FrenchToastAlerter(object):
     def _store_new_status(self):
         """Save new status value to the database."""
         new = Status.query.get(1)
+        now = datetime.now()
 
         # Set status and time updated
         new.status = self.status
-        new.updated = datetime.now()
+        new.updated = now
 
         # Save changes
         DB.session.commit()
 
         # Return timestamp
-        return new.updated
+        return now
 
     def _generate_message_content(self):
         """Generate hash of Slack API message content."""
@@ -187,8 +185,7 @@ class FrenchToastAlerter(object):
             ]
         }
 
-    @staticmethod
-    def _send_result(session, response):  # pylint: disable=W0613
+    def _send_result(self, session, response):  # pylint: disable=W0613
         """Process the results of sending a message to Slack."""
         # Bail if we're missing a team URL
         if not response.url:
@@ -234,39 +231,33 @@ class FrenchToastAlerter(object):
             return
 
         # Otherwise, update last alerted timestamp
-        team.last_alerted = session.get_timestamp()
+        team.last_alerted = self.timestamp
 
         # Save changes to database
         DB.session.commit()
 
     def send_alert(self, team, force=False):
         """Send a single alert message to a given URL."""
-        timestamp = self._get_status_timestamp()
-        self.session.set_timestamp(timestamp)
-
         # Only send messages to the team if it hasn't been sent
         if (
                 force or
-                (team.last_alerted != timestamp and not team.inactive)
+                (team.last_alerted != self.timestamp and not team.inactive)
         ):
             self.session.post(
                 team.url,
                 data=self.msg_data,
                 headers={'Content-Type': 'application/json'},
-                background_callback=self._send_result
+                hooks={'response': self._send_result}
             )
 
     def send_alerts(self, force=False):
         """Send Slack messages to all subscribed Teams."""
-        timestamp = self._get_status_timestamp()
-        self.session.set_timestamp(timestamp)
-
         # Get a list of team URLs based on last_alerted timestamp
         if force:
             teams = Teams.query.all()
         else:
             teams = Teams.query.filter(
-                cast(Teams.last_alerted, DB.DateTime) != timestamp
+                cast(Teams.last_alerted, DB.DateTime) != self.timestamp
             ).filter_by(
                 inactive=False
             ).all()
@@ -282,10 +273,12 @@ class FrenchToastAlerter(object):
                 team.url,
                 data=self.msg_data,
                 headers={'Content-Type': 'application/json'},
-                background_callback=self._send_result
+                hooks={'response': self._send_result}
             )
 
 
 def check_status():
     """Run the French Toast alerter."""
+    logger = logging.getLogger('FrenchToastAlerter')
+    logger.warning('CHECK_STATUS: %s', datetime.now())
     FrenchToastAlerter().send_alerts()

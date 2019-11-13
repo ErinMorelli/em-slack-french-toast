@@ -15,6 +15,7 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
+import logging
 from os import environ
 import newrelic.agent
 
@@ -28,7 +29,10 @@ def main():
     newrelic.agent.initialize()
 
     # Start status checking jobs
-    SCHEDULER.start()
+    try:
+        SCHEDULER.start()
+    except Exception as ex:
+        logging.warning('Skipping scheduler start: %s', str(ex))
 
     # Start Flask app
     APP.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)), debug=True)
