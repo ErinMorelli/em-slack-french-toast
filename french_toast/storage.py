@@ -47,10 +47,10 @@ class Teams(DB.Model):  # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         """Friendly representation of Team for debugging."""
-        return '<Team id={id} team={team} channel={channel}>'.format(
+        return '<Team id={id} last_alerted={alerted}{inactive}>'.format(
             id=self.id,
-            team=self.team_id,
-            channel=self.channel_id
+            alerted=self.last_alerted,
+            inactive=' [INACTIVE]' if self.inactive else ''
         )
 
 
@@ -61,19 +61,20 @@ class Status(DB.Model):  # pylint: disable=too-few-public-methods
 
     id = DB.Column(DB.Integer, primary_key=True, default=1)
     status = DB.Column(DB.String(16))
-    updated = DB.Column(DB.DateTime, default=datetime.now)
+    updated = DB.Column(DB.DateTime)
 
     DB.CheckConstraint('id == 1', name='has_id')
 
-    def __init__(self, status):
+    def __init__(self, status, updated):
         """Initialize new status in db."""
         self.status = status
+        self.updated = updated
 
     def __repr__(self):
         """Friendly representation of Status for debugging."""
         return '<Status "{status}" at {updated}>'.format(
             status=self.status,
-            updated=str(self.updated)
+            updated=self.updated
         )
 
 

@@ -15,15 +15,16 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-from flask import abort
 from datetime import timedelta
-from slacker import OAuth, Error
 from urllib.parse import urlencode
+
+from flask import abort
+from slacker import OAuth, Error
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
-from french_toast import PROJECT_INFO, report_event
 from french_toast.storage import Teams, DB
 from french_toast.alert import FrenchToastAlerter
+from french_toast import PROJECT_INFO, report_event
 
 
 # Create serializer
@@ -165,7 +166,7 @@ def store_data(info):
 def send_initial_alert(team):
     """Send an initial alert to the team."""
     alerter = FrenchToastAlerter()
-    alerter.send_alert(team, True)
+    alerter.send_alert(team)
 
 
 def validate_return(args):

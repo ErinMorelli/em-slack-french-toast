@@ -15,12 +15,11 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-import logging
 from os import environ
 import newrelic.agent
 
 from french_toast.app import APP
-from french_toast import SCHEDULER
+from french_toast.alert import FrenchToastAlerter
 
 
 def main():
@@ -28,11 +27,8 @@ def main():
     # Start New Relic agent
     newrelic.agent.initialize()
 
-    # Start status checking jobs
-    try:
-        SCHEDULER.start()
-    except Exception as ex:
-        logging.warning('Skipping scheduler start: %s', str(ex))
+    # Start status checking daemon
+    FrenchToastAlerter().run_daemon()
 
     # Start Flask app
     APP.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)), debug=True)

@@ -37,7 +37,7 @@ def gen_data_files(*dirs):
 # Set up french_toast package
 setup(
     name='em-slack-french-toast',
-    version='1.6',
+    version='2.0',
     author='Erin Morelli',
     author_email='erin@erinmorelli.com',
     url='http://slack-french-toast.herokuapp.com',
@@ -56,6 +56,7 @@ setup(
     },
 
     install_requires=[
+        'boto3',
         'Flask',
         'Flask-APScheduler',
         'Flask-SQLAlchemy',
@@ -65,6 +66,7 @@ setup(
         'newrelic',
         'pkginfo',
         'psycopg2-binary',
+        'pySqsListener',
         'requests',
         'requests_futures',
         'SQLAlchemy',

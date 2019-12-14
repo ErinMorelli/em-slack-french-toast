@@ -20,8 +20,6 @@ from datetime import date
 from threading import Thread
 from pkg_resources import get_provider
 from flask import Flask
-from flask_apscheduler import APScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import keen
 
 
@@ -36,7 +34,6 @@ __module__ = "french_toast.{0}".format(__file__)
 # Get module info
 def set_project_info():
     """Set project information from setup tools installation."""
-    # CUSTOMIZE THIS VALUE FOR YOUR OWN INSTALLATION
     base_url = 'https://slack-french-toast.herokuapp.com'
 
     # Get app info from the dist
@@ -48,12 +45,16 @@ def set_project_info():
         'name_full': 'EM Slack French Toast',
         'author_url': 'http://www.erinmorelli.com',
         'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '1.8',
-        'version_int': 1.8,
+        'version': '2.0',
+        'version_int': 2.0,
         'package_path': provider.module_path,
         'copyright': str(date.today().year),
         'client_secret': os.environ['SLACK_CLIENT_SECRET'],
         'client_id': os.environ['SLACK_CLIENT_ID'],
+        'queue_name': os.environ['SQS_QUEUE_NAME'],
+        'queue_region': os.environ['AWS_DEFAULT_REGION'],
+        'access_key': os.environ['AWS_ACCESS_KEY_ID'],
+        'secret_key': os.environ['AWS_SECRET_ACCESS_KEY'],
         'base_url': base_url,
         'oauth_url': 'https://slack.com/oauth/authorize',
         'auth_url': '{0}/authenticate'.format(base_url),
@@ -153,33 +154,8 @@ APP = Flask(
 )
 
 # Set up flask config
-# SET THESE ENV VALUES FOR YOUR OWN INSTALLATION
 APP.config.update({
     'SECRET_KEY': os.environ['SECURE_KEY'],
     'SQLALCHEMY_DATABASE_URI': os.environ['DATABASE_URL'],
-    'SQLALCHEMY_TRACK_MODIFICATIONS': True,
-    'SCHEDULER_API_ENABLED': True,
-    'SCHEDULER_JOBSTORES': {
-        'default': SQLAlchemyJobStore(
-            url=os.environ['DATABASE_URL'],
-            tablename='french_toast_jobs'
-        )
-    },
-    'SCHEDULER_JOB_DEFAULTS': {
-        'coalesce': False,
-        'max_instances': 1
-    },
-    'JOBS': [
-        {
-            'id': 'check_status',
-            'func': 'french_toast.alert:check_status',
-            'trigger': 'interval',
-            'minutes': 15
-        }
-    ]
+    'SQLALCHEMY_TRACK_MODIFICATIONS': True
 })
-
-# Set up status checking job scheduler
-SCHEDULER = APScheduler()
-SCHEDULER.init_app(APP)
-SCHEDULER.remove_all_jobs()
