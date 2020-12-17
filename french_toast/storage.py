@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 # pylint: disable=invalid-name
 """
-Copyright (c) 2019 Erin Morelli.
+Copyright (c) 2020 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -47,11 +47,8 @@ class Teams(DB.Model):  # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         """Friendly representation of Team for debugging."""
-        return '<Team id={id} last_alerted={alerted}{inactive}>'.format(
-            id=self.id,
-            alerted=self.last_alerted,
-            inactive=' [INACTIVE]' if self.inactive else ''
-        )
+        active = ' [INACTIVE]' if self.inactive else ''
+        return f'<Team id={self.id} last_alerted={self.last_alerted}{active}>'
 
 
 class Status(DB.Model):  # pylint: disable=too-few-public-methods
@@ -72,10 +69,7 @@ class Status(DB.Model):  # pylint: disable=too-few-public-methods
 
     def __repr__(self):
         """Friendly representation of Status for debugging."""
-        return '<Status "{status}" at {updated}>'.format(
-            status=self.status,
-            updated=self.updated
-        )
+        return f'<Status "{self.status}" at {self.updated}>'
 
 
 try:

@@ -2,7 +2,7 @@
 # pylint: disable=no-self-use
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2019 Erin Morelli.
+Copyright (c) 2020 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -16,6 +16,7 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
+import re
 import json
 import logging
 import threading
@@ -46,7 +47,7 @@ class FrenchToastAlerter:
 
     def __init__(self):
         """Set up French Toast status data."""
-        self.logger = logging.getLogger('FrenchToastAlerter')
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         self.current_status = self._get_current_status()
         self.status = self.current_status.status
@@ -223,14 +224,15 @@ class FrenchToastAlerter:
 
     def _get_level_from_status(self, status):
         """Get alert level data from status."""
-        if status not in ALERT_LEVELS.keys():
-            self.logger.error('unknown status: %s', status)
-            report_event('unknown_status', {
-                'status': status
-            })
-            return None
+        for level, level_data in ALERT_LEVELS.items():
+            if re.search(level, status, re.I):
+                return level_data
 
-        return ALERT_LEVELS[status]
+        self.logger.error('unknown status: %s', status)
+        report_event('unknown_status', {
+            'status': status
+        })
+        return None
 
     @staticmethod
     def _get_current_status():
@@ -259,7 +261,7 @@ class FrenchToastAlerter:
                 {
                     "color": self.level['color'],
                     "author_name": "French Toast Alert System",
-                    "author_link": "http://www.universalhub.com/french-toast",
+                    "author_link": PROJECT_INFO['toast_link_url'],
                     "title": self.level['title'],
                     "text": self.level['text'],
                     "thumb_url": self.level['img'],

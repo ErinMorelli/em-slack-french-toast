@@ -11,3 +11,4 @@ dist/
 .status
 *.log*
 *.sh
+.env/

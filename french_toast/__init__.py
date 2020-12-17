@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2019 Erin Morelli.
+Copyright (c) 2020 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -34,7 +34,7 @@ __module__ = "french_toast.{0}".format(__file__)
 # Get module info
 def set_project_info():
     """Set project information from setup tools installation."""
-    base_url = 'https://slack-french-toast.herokuapp.com'
+    base_url = os.environ['BASE_URL']
 
     # Get app info from the dist
     app_name = 'french_toast'
@@ -45,8 +45,8 @@ def set_project_info():
         'name_full': 'EM Slack French Toast',
         'author_url': 'http://www.erinmorelli.com',
         'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '2.0',
-        'version_int': 2.0,
+        'version': '2.1',
+        'version_int': 2.1,
         'package_path': provider.module_path,
         'copyright': str(date.today().year),
         'client_secret': os.environ['SLACK_CLIENT_SECRET'],
@@ -56,10 +56,11 @@ def set_project_info():
         'access_key': os.environ['AWS_ACCESS_KEY_ID'],
         'secret_key': os.environ['AWS_SECRET_ACCESS_KEY'],
         'base_url': base_url,
-        'oauth_url': 'https://slack.com/oauth/authorize',
-        'auth_url': '{0}/authenticate'.format(base_url),
-        'valid_url': '{0}/validate'.format(base_url),
-        'toast_api_url': 'https://www.universalhub.com/toast.xml',
+        'oauth_url': os.environ['OAUTH_URL'],
+        'auth_url': f'{base_url}/authenticate',
+        'valid_url': f'{base_url}/validate',
+        'toast_api_url': os.environ['TOAST_API_URL'],
+        'toast_link_url': os.environ['TOAST_LINK_URL'],
         'team_scope': [
             'incoming-webhook'
         ]

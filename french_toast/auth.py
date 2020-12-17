@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2019 Erin Morelli.
+Copyright (c) 2020 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -189,7 +189,7 @@ def validate_return(args):
     send_initial_alert(team)
 
     # Set success URL
-    redirect_url = '{0}?success=1'.format(PROJECT_INFO['base_url'])
+    redirect_url = f"{PROJECT_INFO['base_url']}?success=1"
 
     # Return successful
     return redirect_url

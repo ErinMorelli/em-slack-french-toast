@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-Copyright (c) 2019 Erin Morelli.
+Copyright (c) 2020 Erin Morelli.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -37,7 +37,7 @@ def gen_data_files(*dirs):
 # Set up french_toast package
 setup(
     name='em-slack-french-toast',
-    version='2.0',
+    version='2.1',
     author='Erin Morelli',
     author_email='erin@erinmorelli.com',
     url='http://slack-french-toast.herokuapp.com',
@@ -69,7 +69,7 @@ setup(
         'pySqsListener',
         'requests',
         'requests_futures',
+        'slacker',
         'SQLAlchemy',
-        'slacker'
     ]
 )
