@@ -1,8 +1,11 @@
 # Basic relevant text files
-include LICENSE README.md
+include LICENSE.txt README.md COPYING
 
 # Include template files
-recursive-include french_toast/templates *
+recursive-include french_toast/templates *.html
+recursive-include french_toast/templates *.png
+recursive-include french_toast/templates *.css
+recursive-include french_toast/templates *.js
 
 # Exclude junk
 global-exclude .DS_Store

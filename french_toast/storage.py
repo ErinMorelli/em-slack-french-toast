@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-# pylint: disable=invalid-name
 """
 Copyright (c) 2021 Erin Morelli.
 
@@ -16,34 +13,48 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
+import os
 from datetime import datetime
+
+from cryptography.fernet import Fernet
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 
-from french_toast import APP
+from . import app
 
 # Create database
-DB = SQLAlchemy(APP)
+db = SQLAlchemy(app)
 
 
-class Teams(DB.Model):  # pylint: disable=too-few-public-methods
+class Teams(db.Model):
     """Table for storing Slack Webhook URLs."""
-
     __tablename__ = 'french_toast_teams'
+    __cipher = Fernet(os.environ.get('TOKEN_KEY', '').encode('utf8'))
 
-    id = DB.Column(DB.Integer, primary_key=True)
-    team_id = DB.Column(DB.String(16))
-    channel_id = DB.Column(DB.String(16))
-    url = DB.Column(DB.String(255), unique=True)
-    added = DB.Column(DB.DateTime, default=datetime.now)
-    last_alerted = DB.Column(DB.DateTime)
-    inactive = DB.Column(DB.Boolean, default=False)
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.String(16))
+    channel_id = db.Column(db.String(16))
+    url = db.Column(db.String(255), unique=True)
+    encrypted_url = db.Column(db.BLOB)
+    added = db.Column(db.DateTime, default=datetime.now)
+    last_alerted = db.Column(db.DateTime)
+    inactive = db.Column(db.Boolean, default=False)
 
     def __init__(self, team_id, channel_id, url):
         """Initialize new Team in db."""
         self.team_id = team_id
         self.channel_id = channel_id
-        self.url = url
+        self.set_url(url)
+
+    def set_url(self, url):
+        """Encrypt and set url value ."""
+        if not isinstance(url, bytes):
+            url = url.encode('utf-8')
+        self.encrypted_url = self.__cipher.encrypt(url)
+
+    def get_token(self):
+        """Retrieve decrypted URL."""
+        return self.__cipher.decrypt(self.url).decode('utf-8')
 
     def __repr__(self):
         """Friendly representation of Team for debugging."""
@@ -51,16 +62,15 @@ class Teams(DB.Model):  # pylint: disable=too-few-public-methods
         return f'<Team id={self.id} last_alerted={self.last_alerted}{active}>'
 
 
-class Status(DB.Model):  # pylint: disable=too-few-public-methods
+class Status(db.Model):
     """Table for storing current French Toast status."""
-
     __tablename__ = 'french_toast_status'
 
-    id = DB.Column(DB.Integer, primary_key=True, default=1)
-    status = DB.Column(DB.String(16))
-    updated = DB.Column(DB.DateTime)
+    id = db.Column(db.Integer, primary_key=True, default=1)
+    status = db.Column(db.String(16))
+    updated = db.Column(db.DateTime)
 
-    DB.CheckConstraint('id == 1', name='has_id')
+    db.CheckConstraint('id == 1', name='has_id')
 
     def __init__(self, status, updated):
         """Initialize new status in db."""
@@ -74,8 +84,7 @@ class Status(DB.Model):  # pylint: disable=too-few-public-methods
 
 try:
     # Attempt to initialize database
-    DB.create_all()
-
+    db.create_all()
 except SQLAlchemyError:
     # Other wise, refresh the session
-    DB.session.rollback()
+    db.session.rollback()

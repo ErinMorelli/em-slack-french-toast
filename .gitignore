@@ -12,3 +12,4 @@ dist/
 *.log*
 *.sh
 .env/
+environ.sh
