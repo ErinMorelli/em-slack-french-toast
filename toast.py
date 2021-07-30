@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
 Copyright (c) 2021 Erin Morelli.
 
@@ -18,20 +16,19 @@ included in all copies or substantial portions of the Software.
 from os import environ
 import newrelic.agent
 
-from french_toast.app import APP
+from french_toast.app import app
 from french_toast.alert import FrenchToastAlerter
 
 
 def main():
     """Initialize Flask application."""
-    # Start New Relic agent
     newrelic.agent.initialize()
 
     # Start status checking daemon
     FrenchToastAlerter().run_daemon()
 
     # Start Flask app
-    APP.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)), debug=True)
+    app.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)))
 
 
 if __name__ == '__main__':

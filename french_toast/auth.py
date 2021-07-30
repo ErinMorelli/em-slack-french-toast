@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
 Copyright (c) 2021 Erin Morelli.
 
@@ -22,30 +20,29 @@ from flask import abort
 from slacker import OAuth, Error
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
-from french_toast.storage import Teams, DB
-from french_toast.alert import FrenchToastAlerter
-from french_toast import PROJECT_INFO, report_event
+from .storage import Teams, db
+from .alert import FrenchToastAlerter
+from . import project_info, report_event
 
 
 # Create serializer
-GENERATOR = URLSafeTimedSerializer(PROJECT_INFO['client_secret'])
+generator = URLSafeTimedSerializer(project_info['client_secret'])
 
 
 def get_redirect():
     """Generate Slack authentication URL."""
-    # Generate state token
-    state_token = GENERATOR.dumps(PROJECT_INFO['client_id'])
+    state_token = generator.dumps(project_info['client_id'])
 
     # URL encode params
     params = urlencode({
-        'client_id': PROJECT_INFO['client_id'],
-        'redirect_uri': PROJECT_INFO['valid_url'],
-        'scope': ' '.join(PROJECT_INFO['team_scope']),
+        'client_id': project_info['client_id'],
+        'redirect_uri': project_info['valid_url'],
+        'scope': ' '.join(project_info['team_scope']),
         'state': state_token
     })
 
     # Set full location
-    location = "{0}?{1}".format(PROJECT_INFO['oauth_url'], params)
+    location = f"{project_info['oauth_url']}?{params}"
 
     # Return URL for redirect
     return location
@@ -57,26 +54,22 @@ def validate_state(state):
 
     try:
         # Attempt to decode state
-        state_token = GENERATOR.loads(
+        state_token = generator.loads(
             state,
-            max_age=timedelta(minutes=60).total_seconds()
+            max_age=int(timedelta(minutes=60).total_seconds())
         )
 
     except SignatureExpired:
         # Token has expired
-        report_event('token_expired', {
-            'state': state
-        })
+        report_event('token_expired', {'state': state})
         abort(400)
 
     except BadSignature:
         # Token is not authorized
-        report_event('token_not_authorized', {
-            'state': state
-        })
+        report_event('token_not_authorized', {'state': state})
         abort(401)
 
-    if not state_token or state_token != PROJECT_INFO['client_id']:
+    if not state_token or state_token != project_info['client_id']:
         # Token is not authorized
         report_event('token_not_valid', {
             'state': state,
@@ -87,16 +80,15 @@ def validate_state(state):
 
 def get_token(code):
     """Request a token from the Slack API."""
-    # Set OAuth access object
     oauth = OAuth()
     result = None
 
     try:
         # Attempt to make request
         result = oauth.access(
-            client_id=PROJECT_INFO['client_id'],
-            client_secret=PROJECT_INFO['client_secret'],
-            redirect_uri=PROJECT_INFO['valid_url'],
+            client_id=project_info['client_id'],
+            client_secret=project_info['client_secret'],
+            redirect_uri=project_info['valid_url'],
             code=code
         )
 
@@ -127,7 +119,6 @@ def get_token(code):
 
 def store_data(info):
     """Store validated data in the database."""
-    # Check if user exists
     team = Teams.query.filter_by(
         team_id=info['team_id'],
         channel_id=info['channel_id']
@@ -143,21 +134,21 @@ def store_data(info):
 
         # Store new user
         report_event('team_added', info)
-        DB.session.add(new_team)
+        db.session.add(new_team)
 
         # Update DB
-        DB.session.commit()
+        db.session.commit()
 
         # Return new team object
         return new_team
 
     # Update team info
-    team.url = info['url']
+    team.set_url(info['url'])
     team.inactive = False
     report_event('team_updated', info)
 
     # Update DB
-    DB.session.commit()
+    db.session.commit()
 
     # Return team object
     return team
@@ -165,8 +156,7 @@ def store_data(info):
 
 def send_initial_alert(team):
     """Send an initial alert to the team."""
-    alerter = FrenchToastAlerter()
-    alerter.send_alert(team)
+    FrenchToastAlerter().send_alert(team)
 
 
 def validate_return(args):
@@ -188,8 +178,5 @@ def validate_return(args):
     # Send initial alert
     send_initial_alert(team)
 
-    # Set success URL
-    redirect_url = f"{PROJECT_INFO['base_url']}?success=1"
-
     # Return successful
-    return redirect_url
+    return f"{project_info['base_url']}?success=1"

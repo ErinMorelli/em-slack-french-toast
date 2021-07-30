@@ -15,61 +15,34 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
-def gen_data_files(*dirs):
-    """Generate list of files for package data installation."""
-    results = []
-
-    for src_dir in dirs:
-        src_dir = os.path.join('french_toast', src_dir)
-        for root, dirs, files in os.walk(src_dir):
-            top = root.split(os.sep)
-            top.pop(0)
-            root = (os.sep).join(top)
-            for item in files:
-                results.append(os.path.join(root, item))
-    return results
-
-
-# Set up french_toast package
 setup(
     name='em-slack-french-toast',
-    version='2.1',
+    version=open('VERSION').read(),
     author='Erin Morelli',
-    author_email='erin@erinmorelli.com',
-    url='http://slack-french-toast.herokuapp.com',
+    author_email='me@erin.dev',
+    url='https://slack-french-toast.herokuapp.com',
     license='MIT',
     platforms='Linux, OSX',
     description='Get Universal Hub\'s French Toast Alerts on Slack.',
     long_description=open('README.md').read(),
-
-    packages=[
-        'french_toast',
-        'french_toast.templates'
-    ],
-
-    package_data={
-        'french_toast': gen_data_files('templates')
-    },
-
+    packages=find_packages(),
+    include_package_data=True,
     install_requires=[
-        'boto3',
+        'cryptography',
         'Flask',
-        'Flask-APScheduler',
         'Flask-SQLAlchemy',
         'itsdangerous',
         'keen',
         'mysqlclient',
         'newrelic',
+        'pika',
         'pkginfo',
         'psycopg2-binary',
-        'pySqsListener',
         'requests',
-        'requests_futures',
         'slacker',
-        'SQLAlchemy',
+        'SQLAlchemy'
     ]
 )

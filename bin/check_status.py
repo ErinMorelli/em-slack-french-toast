@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
 """
 Copyright (c) 2021 Erin Morelli.
 
@@ -15,25 +14,28 @@ The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
 """
 
-from flask import redirect, render_template, request
-
-import french_toast.auth as auth
-from french_toast import app, project_info
+import os
+import pika
 
 
-@app.route('/')
-def home():
-    """Render app homepage template."""
-    return render_template('index.html', project=project_info)
+def main():
+    """Send a message to the status check queue."""
+    amqp_queue_name = os.environ.get('CLOUDAMQP_QUEUE_NAME')
+    amqp_url = os.environ.get('CLOUDAMQP_URL')
+
+    # Set up connection
+    connection = pika.BlockingConnection(pika.URLParameters(amqp_url))
+    channel = connection.channel()
+    channel.queue_declare(queue=amqp_queue_name)
+
+    # Send message
+    channel.basic_publish(exchange='',
+                          routing_key=amqp_queue_name,
+                          body=b'Status check')
+
+    # Close connection
+    connection.close()
 
 
-@app.route('/authenticate')
-def authenticate():
-    """Redirect to generated Slack authentication url."""
-    return redirect(auth.get_redirect())
-
-
-@app.route('/validate')
-def validate():
-    """Validate the returned values from authentication."""
-    return redirect(auth.validate_return(request.args.to_dict()))
+if __name__ == '__main__':
+    main()

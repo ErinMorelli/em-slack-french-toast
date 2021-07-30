@@ -1,9 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="chrome=1">
-        <title>{{ project.name_full }}</title>
+        <title>{{ project.name }}</title>
 
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
@@ -26,9 +26,9 @@
         {% endif %}
         <div class="wrapper">
             <header>
-                <h1>{{ project.name_full }} <small>{{ project.version }}</small></h1>
+                <h1>{{ project.name }} <small>{{ project.version }}</small></h1>
                 <p style="margin-bottom:20px">Get French Toast Alerts on <a href="https://slack.com/">Slack</a>.</p>
-                <p><img src="{{ url_for('static', filename='img/toast.png') }}" border="0" alt="{{ project.name_full }}" /></p>
+                <p><img src="{{ url_for('static', filename='img/toast.png') }}" border="0" alt="{{ project.name }}" /></p>
                 <p class="view"><a href="{{ project.github_url }}">View the Project on GitHub <small>ErinMorelli/em-slack-french-toast</small></a></p>
                 <ul>
                     <li><a href="{{ project.github_url }}/zipball/master">Download <strong>ZIP File</strong></a></li>
@@ -39,7 +39,7 @@
             <section>
                 <h1>Know exactly when to rush to the store.</h1>
 
-                <p>Get up to the minute French Toast Alert System updates in your Slack Workspace! Alerts are generated using data provided by Universal Hub's <a href="http://www.universalhub.com/french-toast" target="_blank">French Toast Alert System</a>.</p>
+                <p>Get up to the minute French Toast Alert System updates in your Slack Workspace! Alerts are generated using data provided by Universal Hub's <a href="http://www.universalhub.com/french-toast" rel="noopener noreferrer" target="_blank">French Toast Alert System</a>.</p>
 
                 <p>Use this button to add the alerts to a channel in your Workspace:</p>
 

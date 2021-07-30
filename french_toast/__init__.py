@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Copyright (c) 2021 Erin Morelli.
 
@@ -18,67 +16,49 @@ included in all copies or substantial portions of the Software.
 import os
 from datetime import date
 from threading import Thread
-from pkg_resources import get_provider
-from flask import Flask
+
 import keen
+from flask import Flask
+from pkg_resources import get_provider
 
 
-# =============================================================================
-#  App Constants
-# =============================================================================
+# Common project metadata
+__version__ = open('VERSION').read()
+__app_name__ = 'EM Slack French Toast'
+__copyright__ = f'2018-{str(date.today().year)}'
 
-# Set module name
-__module__ = "french_toast.{0}".format(__file__)
-
+# Project URLs
+base_url = os.environ.get('BASE_URL')
+github_url = os.environ.get('GITHUB_URL')
 
 # Get module info
-def set_project_info():
-    """Set project information from setup tools installation."""
-    base_url = os.environ['BASE_URL']
-
-    # Get app info from the dist
-    app_name = 'french_toast'
-    provider = get_provider(app_name)
-
-    return {
-        'name': app_name,
-        'name_full': 'EM Slack French Toast',
-        'author_url': 'http://www.erinmorelli.com',
-        'github_url': 'https://github.com/ErinMorelli/em-slack-french-toast',
-        'version': '2.1',
-        'version_int': 2.1,
-        'package_path': provider.module_path,
-        'copyright': str(date.today().year),
-        'client_secret': os.environ['SLACK_CLIENT_SECRET'],
-        'client_id': os.environ['SLACK_CLIENT_ID'],
-        'queue_name': os.environ['SQS_QUEUE_NAME'],
-        'queue_region': os.environ['AWS_DEFAULT_REGION'],
-        'access_key': os.environ['AWS_ACCESS_KEY_ID'],
-        'secret_key': os.environ['AWS_SECRET_ACCESS_KEY'],
-        'base_url': base_url,
-        'oauth_url': os.environ['OAUTH_URL'],
-        'auth_url': f'{base_url}/authenticate',
-        'valid_url': f'{base_url}/validate',
-        'toast_api_url': os.environ['TOAST_API_URL'],
-        'toast_link_url': os.environ['TOAST_LINK_URL'],
-        'team_scope': [
-            'incoming-webhook'
-        ]
-    }
-
-
-# Project info
-PROJECT_INFO = set_project_info()
+project_info = {
+    'name': __app_name__,
+    'version': __version__,
+    'copyright': __copyright__,
+    'base_url': base_url,
+    'github_url': github_url,
+    'client_secret': os.environ.get('SLACK_CLIENT_SECRET'),
+    'client_id': os.environ.get('SLACK_CLIENT_ID'),
+    'oauth_url': os.environ.get('OAUTH_URL'),
+    'auth_url': f'{base_url}/authenticate',
+    'valid_url': f'{base_url}/validate',
+    'toast_api_url': os.environ['TOAST_API_URL'],
+    'toast_link_url': os.environ['TOAST_LINK_URL'],
+    'team_scope': [
+        'incoming-webhook'
+    ]
+}
 
 # Set the template directory
-TEMPLATE_DIR = os.path.join(PROJECT_INFO['package_path'], 'templates')
+template_dir = os.path.join(get_provider(__name__).module_path, 'templates')
 
 # Set the French Toast alert levels
 # Content taken directly from http://www.universalhub.com/french-toast
-ALERT_LEVELS = {
+alert_levels = {
     "LOW": {
         "color": "#97FF9B",
-        "img": "http://www.universalhub.com/images/2007/frenchtoastgreen.jpg",
+        "img": "https://www.universalhub.com/images/2007/frenchtoastgreen.jpg",
         "title": "1 Slice / Low",
         "text": ("No storm predicted. Harvey Leonard sighs and looks dour on "
                  "the evening news. Go about your daily business but consider "
@@ -87,7 +67,7 @@ ALERT_LEVELS = {
     },
     "GUARDED": {
         "color": "#9799FF",
-        "img": "http://www.universalhub.com/images/2007/frenchtoastblue.jpg",
+        "img": "https://www.universalhub.com/images/2007/frenchtoastblue.jpg",
         "title": "2 Slices / Guarded",
         "text": ("Light snow predicted. Subtle grin appears on Harvey "
                  "Leonard's face. Check car fuel gauge, memorize quickest "
@@ -95,7 +75,7 @@ ALERT_LEVELS = {
     },
     "ELEVATED": {
         "color": "#FFFF40",
-        "img": "http://www.universalhub.com/images/2007/frenchtoastyellow.jpg",
+        "img": "https://www.universalhub.com/images/2007/frenchtoastyellow.jpg",
         "title": "3 Slices / Elevated",
         "text": ("Moderate, plowable snow predicted. Harvey Leonard openly "
                  "smiles during report. Empty your trunk to make room for "
@@ -105,7 +85,7 @@ ALERT_LEVELS = {
     },
     "HIGH": {
         "color": "#FF821D",
-        "img": "http://www.universalhub.com/images/2007/frenchtoastorange.jpg",
+        "img": "https://www.universalhub.com/images/2007/frenchtoastorange.jpg",
         "title": "4 Slices / High",
         "text": ("Heavy snow predicted. Harvey Leonard breaks into huge grin, "
                  "can't keep his hands off the weather map. Proceed at speed "
@@ -115,7 +95,7 @@ ALERT_LEVELS = {
     },
     "SEVERE": {
         "color": "#F85D58",
-        "img": "http://www.universalhub.com/images/2007/frenchtoastred.jpg",
+        "img": "https://www.universalhub.com/images/2007/frenchtoastred.jpg",
         "title": "5 Slices / Severe",
         "text": ("Nor'easter predicted. This is it, people, THE BIG ONE. "
                  "Harvey Leonard makes repeated references to the Blizzard "
@@ -127,10 +107,23 @@ ALERT_LEVELS = {
     }
 }
 
+# Initialize flask app
+app = Flask(
+    'em-slack-french-toast',
+    template_folder=template_dir,
+    static_folder=template_dir
+)
+
+# Set up flask config
+app.config.update({
+    'SECRET_KEY': os.environ.get('SECURE_KEY'),
+    'SQLALCHEMY_DATABASE_URI': os.environ.get('DATABASE_URL'),
+    'SQLALCHEMY_TRACK_MODIFICATIONS': True
+})
+
 
 def report_event(name, event):
     """Asynchronously report an event."""
-    # Set up thread
     event_report = Thread(
         target=keen.add_event,
         args=(name, event)
@@ -141,22 +134,3 @@ def report_event(name, event):
 
     # Start event report
     event_report.start()
-
-
-# =============================================================================
-# Flask App Configuration
-# =============================================================================
-
-# Initialize flask app
-APP = Flask(
-    'em-slack-french-toast',
-    template_folder=TEMPLATE_DIR,
-    static_folder=TEMPLATE_DIR
-)
-
-# Set up flask config
-APP.config.update({
-    'SECRET_KEY': os.environ['SECURE_KEY'],
-    'SQLALCHEMY_DATABASE_URI': os.environ['DATABASE_URL'],
-    'SQLALCHEMY_TRACK_MODIFICATIONS': True
-})
